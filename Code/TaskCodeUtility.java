@@ -1,3 +1,6 @@
+import java.util.*;
+import java.util.regex.Pattern;
+
 public class TaskCodeUtility
 {
     public static String GetDifficultyCode(String taskCode)
@@ -29,5 +32,49 @@ public class TaskCodeUtility
             }
         }
         return -1;
+    }
+
+    public static boolean IsValidCode(String taskCode)
+    {
+        if (FindIndexOfSeparator(taskCode) == -1)
+        {
+            return false;
+        }
+
+        if (!Pattern.matches("[A-Z][0-9]", GetWeekCode(taskCode)))
+        {
+            return false;
+        }
+
+        if (!difficultyCodes.containsKey(GetDifficultyCode(taskCode)))
+        {
+            return false;
+        }
+
+        if (!Pattern.matches("[0-9]+", GetIndexCode(taskCode)))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    static private HashMap<String, Integer> difficultyCodes = new HashMap<>();
+    static 
+    {
+        difficultyCodes.put("EA", 2);
+        difficultyCodes.put("MD", 4);
+        difficultyCodes.put("HD", 8);
+        difficultyCodes.put("EX", 14);
+    }
+
+    static public int TaskCodeToPoint(String taskCode)
+    {
+        String difficultyCode = GetDifficultyCode(taskCode);
+        if (difficultyCodes.containsKey(difficultyCode))
+        {
+            return difficultyCodes.get(difficultyCode);
+        }
+        return 0;
     }
 }

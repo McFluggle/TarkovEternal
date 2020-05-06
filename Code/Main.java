@@ -40,6 +40,10 @@ public class Main {
               String code = splitInput[2];
               HandleGet(typeToGet, code);
               break;
+            case "add":
+              String typeToAdd = splitInput[1];
+              HandleAdd(typeToAdd);
+              break;
             default:
               break;
           }
@@ -59,6 +63,26 @@ public class Main {
     }
   }
 
+  public static void HandleAdd(String typeToAdd)
+  {
+    switch (typeToAdd)
+    {
+      case "task":
+        try 
+        {
+          AddTask();
+        } 
+        catch (IOException e) 
+        {
+          System.out.println("An error when attempting to read the data stream, please try again");
+        }
+        break;
+      default:
+        System.out.println("Type " + typeToAdd + " unrecognised, accepted types are: task, player");
+        break;
+    }
+  }
+
   public static void HandleGet(String typeToGet, String code)
   {
     switch (typeToGet)
@@ -67,6 +91,7 @@ public class Main {
         GetTask(code);
         break;
       default:
+        System.out.println("Type " + typeToGet + " unrecognised, accepted types are: task, player");
         break;
     }
   }
@@ -84,5 +109,24 @@ public class Main {
       }
     }
     System.out.println("No task with code " + code + " was found");
+  }
+
+  public static void AddTask() throws IOException
+  {
+    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+    System.out.print("Task code: ");
+    String taskCode = reader.readLine();
+
+    if (TaskCodeUtility.IsValidCode(taskCode))
+    {
+      System.out.print("Task Description: ");
+      String taskDescription = reader.readLine();
+      Tasks.add(new Task(taskCode, taskDescription));
+      System.out.println("Operation successful, task " + taskCode + " created");
+    }
+    else 
+    {
+      System.out.println("Operation failed, invalid task code: " + taskCode);
+    }
   }
 }
