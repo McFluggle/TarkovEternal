@@ -3,10 +3,10 @@ public class Task
   private String taskCode;
   private String taskDescription;
 
-  public Task(String _taskCode, String _taskDescription)
+  public Task(String taskCode, String taskDescription)
   {
-    this.taskCode = _taskCode;
-    this.taskDescription = _taskDescription;
+    this.taskCode = taskCode;
+    this.taskDescription = taskDescription;
   }
 
   public String getTaskCode()

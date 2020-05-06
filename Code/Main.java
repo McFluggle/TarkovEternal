@@ -1,13 +1,12 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+
 import java.util.*;
+import java.io.*;
 
 public class Main {
   static ArrayList<Task> Tasks = new ArrayList<Task>();
 
   static ArrayList<Command> allCommands = new ArrayList<Command>(
-      Arrays.asList(new Command("get", "<type> <code>", 2), new Command("add", "<type>", 1)));
+      Arrays.asList(new Command("get", "<type> <code>", 2), new Command("add", "<type>", 1), new Command("exit", "", 0)));
 
   public static void main(String[] args) throws IOException
   {
@@ -19,7 +18,9 @@ public class Main {
       commandDictionary.put(cmd.getName(), cmd);
     }
 
-    while (!exitCommandGiven)
+    loadTasks();
+
+    while (exitCommandGiven == false)
     {
       System.out.print("> ");
       BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -44,6 +45,9 @@ public class Main {
               String typeToAdd = splitInput[1];
               HandleAdd(typeToAdd);
               break;
+            case "exit":
+              exitCommandGiven = true;
+              break;
             default:
               break;
           }
@@ -60,10 +64,43 @@ public class Main {
           }
         }
       }
+      else 
+      {
+        System.out.println("Command " + inputCommand + " not recognised");
+      }
     }
+
+    saveTasks();
   }
 
-  public static void HandleAdd(String typeToAdd)
+  public static void saveTasks() throws IOException
+  {
+    FileWriter tasksSaveFileWriter = new FileWriter("tasks.csv");
+
+    for (Task tsk : Tasks)
+    {
+      tasksSaveFileWriter.append(tsk.getTaskCode() + "," + tsk.getTaskDescription() + "\n");
+    }
+
+    tasksSaveFileWriter.flush();
+    tasksSaveFileWriter.close();
+  }
+
+  public static void loadTasks() throws IOException
+  {
+    BufferedReader tasksSaveFileReader = new BufferedReader(new FileReader("tasks.csv"));
+    String row;
+
+    while ((row = tasksSaveFileReader.readLine()) != null)
+    {
+      String[] dataLine = row.split(",");
+      Tasks.add(new Task(dataLine[0], dataLine[1]));
+    }
+
+    tasksSaveFileReader.close();
+  }
+
+  private static void HandleAdd(String typeToAdd)
   {
     switch (typeToAdd)
     {
@@ -83,7 +120,7 @@ public class Main {
     }
   }
 
-  public static void HandleGet(String typeToGet, String code)
+  private static void HandleGet(String typeToGet, String code)
   {
     switch (typeToGet)
     {
@@ -96,22 +133,22 @@ public class Main {
     }
   }
 
-  public static void GetTask(String code)
+  private static void GetTask(String taskCode)
   {
     for (Task task : Tasks)
     {
-      if (task.getTaskCode() == code)
+      if (task.getTaskCode().equals(taskCode))
       {
-        System.out.println("Task code: " + code);
-        System.out.println("Task points: ");
+        System.out.println("Task code: " + taskCode);
+        System.out.println("Task points: " + TaskCodeUtility.TaskCodeToPoint(taskCode));
         System.out.println("Task Description: " + task.getTaskDescription());
         return;
       }
     }
-    System.out.println("No task with code " + code + " was found");
+    System.out.println("No task with code " + taskCode + " was found");
   }
 
-  public static void AddTask() throws IOException
+  private static void AddTask() throws IOException
   {
     BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
     System.out.print("Task code: ");
