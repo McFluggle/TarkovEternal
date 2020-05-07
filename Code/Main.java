@@ -1,12 +1,14 @@
 
 import java.util.*;
+
 import java.io.*;
 
 public class Main {
   static ArrayList<Task> Tasks = new ArrayList<Task>();
 
   static ArrayList<Command> allCommands = new ArrayList<Command>(
-      Arrays.asList(new Command("get", "<type> <code>", 2), new Command("add", "<type>", 1), new Command("exit", "", 0)));
+      Arrays.asList(new Command("get", "<type> <code>", 2), new Command("add", "<type>", 1),
+       new Command("exit", "", 0), new Command("delete", "<type> <code>", 2)));
 
   public static void main(String[] args) throws IOException
   {
@@ -38,8 +40,8 @@ public class Main {
           {
             case "get":
               String typeToGet = splitInput[1];
-              String code = splitInput[2];
-              HandleGet(typeToGet, code);
+              String codeToGet = splitInput[2];
+              HandleGet(typeToGet, codeToGet);
               break;
             case "add":
               String typeToAdd = splitInput[1];
@@ -47,6 +49,11 @@ public class Main {
               break;
             case "exit":
               exitCommandGiven = true;
+              break;
+            case "delete":
+              String typeToDelete = splitInput[1];
+              String codeToDelete = splitInput[2];
+              HandleDelete(typeToDelete, codeToDelete);
               break;
             default:
               break;
@@ -140,6 +147,25 @@ public class Main {
     }
   }
 
+  private static void HandleDelete(String typeToDelete, String code)
+  {
+    switch (typeToDelete)
+    {
+      case "task":
+        try
+        {
+          DeleteTask(code);
+        }
+        catch (IOException e) 
+        {
+          System.out.println("An error when attempting to read the data stream, please try again");
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
   private static void GetAllTasks()
   {
     for (Task task : Tasks)
@@ -189,5 +215,37 @@ public class Main {
     {
       System.out.println("Operation failed, invalid task code: " + taskCode);
     }
+  }
+
+  private static void DeleteTask(String taskCode) throws IOException
+  {
+    if (TaskCodeUtility.IsValidCode(taskCode) == false)
+    {
+      System.out.println("Invalid task code " + taskCode);
+      return;
+    }
+
+    for (Task task : Tasks)
+    {
+      if (task.getTaskCode().equals(taskCode))
+      {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+
+        System.out.println("Are you sure you want to delete the following task? This is a permenant action. (Y/N)");
+        GetTask(taskCode);
+        String response = reader.readLine();
+        response = response.toUpperCase();
+        switch (response)
+        {
+          case "Y":
+            Tasks.remove(task);
+            System.out.println("Task " + taskCode + " removed");
+            return;
+          default:
+            System.out.println("Task " + taskCode + " not deleted");
+        }
+      }
+    }
+    System.out.println("No task with code " + taskCode + " was found");
   }
 }
