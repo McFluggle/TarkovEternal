@@ -68,9 +68,8 @@ public class Main {
       {
         System.out.println("Command " + inputCommand + " not recognised");
       }
+      saveTasks();
     }
-
-    saveTasks();
   }
 
   public static void saveTasks() throws IOException
@@ -125,7 +124,15 @@ public class Main {
     switch (typeToGet)
     {
       case "task":
-        GetTask(code);
+        switch (code)
+        {
+          case "all":
+            GetAllTasks();
+            break;
+          default:
+            GetTask(code);
+            break;
+        }
         break;
       default:
         System.out.println("Type " + typeToGet + " unrecognised, accepted types are: task, player");
@@ -133,8 +140,25 @@ public class Main {
     }
   }
 
+  private static void GetAllTasks()
+  {
+    for (Task task : Tasks)
+    {
+      System.out.println("Task code: " + task.getTaskCode());
+      System.out.println("Task points: " + TaskCodeUtility.TaskCodeToPoint(task.getTaskCode()));
+      System.out.println("Task Description: " + task.getTaskDescription() + "\n");
+      
+    }
+  }
+
   private static void GetTask(String taskCode)
   {
+    if (TaskCodeUtility.IsValidCode(taskCode) == false)
+    {
+      System.out.println("Invalid task code " + taskCode);
+      return;
+    }
+
     for (Task task : Tasks)
     {
       if (task.getTaskCode().equals(taskCode))
