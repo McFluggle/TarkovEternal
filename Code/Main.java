@@ -1,6 +1,4 @@
-
 import java.util.*;
-
 import java.io.*;
 
 public class Main {
@@ -69,12 +67,13 @@ public class Main {
         {
           if (splitInput.length <= commandToRun.getAmountOfArguments())
           {
-            System.out.println("Not enough arguments for " + commandToRun.getName() + " command, correct pattern is: " + commandToRun.getName() + " " + commandToRun.getArgumentPatternAsString());
+            System.out.print("Not enough ");
           }
           else 
           {
-            System.out.println("Too many arguments for " + commandToRun.getName() + " command, correct pattern is: " + commandToRun.getName() + " " + commandToRun.getArgumentPatternAsString());
+            System.out.print("Too many ");
           }
+          System.out.println("arguments for " + commandToRun.getName() + " command, correct pattern is: " + commandToRun.getName() + " " + commandToRun.getArgumentPatternAsString());
         }
       }
       else 
@@ -87,29 +86,12 @@ public class Main {
 
   public static void saveTasks() throws IOException
   {
-    FileWriter tasksSaveFileWriter = new FileWriter("tasks.csv");
-
-    for (Task task : Tasks)
-    {
-      tasksSaveFileWriter.append(task.getTaskCode() + "," + task.getTaskDescription() + "\n");
-    }
-
-    tasksSaveFileWriter.flush();
-    tasksSaveFileWriter.close();
+    SaveTasksToFile(Tasks, StringStore.taskSaveFileLocation);
   }
 
   public static void loadTasks() throws IOException
   {
-    BufferedReader tasksSaveFileReader = new BufferedReader(new FileReader("tasks.csv"));
-    String row;
-
-    while ((row = tasksSaveFileReader.readLine()) != null)
-    {
-      String[] dataLine = row.split(",");
-      Tasks.add(new Task(dataLine[0], dataLine[1]));
-    }
-
-    tasksSaveFileReader.close();
+    Tasks = ReadTaskFile(StringStore.taskSaveFileLocation);
   }
 
   private static void HandleAdd(String typeToAdd)
@@ -127,7 +109,7 @@ public class Main {
         }
         break;
       default:
-        System.out.println("Type " + typeToAdd + " unrecognised, accepted types are: task, player");
+        System.out.println(String.format(StringStore.typeUnrecognisedErrorMessage, typeToAdd));
         break;
     }
   }
@@ -149,7 +131,7 @@ public class Main {
             }
             catch (IOException e)
             {
-              System.out.println("Error when attempting to read from file, possible corruption");
+              System.out.println(StringStore.fileReadFailErrorMessage);
             }
             break;
           default:
@@ -158,7 +140,7 @@ public class Main {
         }
         break;
       default:
-        System.out.println("Type " + typeToGet + " unrecognised, accepted types are: task, player");
+        System.out.println(String.format(StringStore.typeUnrecognisedErrorMessage, typeToGet));
         break;
     }
   }
@@ -193,7 +175,7 @@ public class Main {
         }
         catch (IOException e)
         {
-          System.out.println("Error when attempting to read from file, possible corruption");
+          System.out.println(StringStore.fileReadFailErrorMessage);
         }
         break;
       default:
@@ -203,13 +185,7 @@ public class Main {
 
   private static void GetAllTasks()
   {
-    for (Task task : Tasks)
-    {
-      System.out.println("Task code: " + task.getTaskCode());
-      System.out.println("Task points: " + TaskCodeUtility.TaskCodeToPoint(task.getTaskCode()));
-      System.out.println("Task Description: " + task.getTaskDescription() + "\n");
-      
-    }
+    DisplayTasks(Tasks, true);
   }
 
   private static void GetTask(String taskCode)
@@ -224,13 +200,11 @@ public class Main {
     {
       if (task.getTaskCode().equals(taskCode))
       {
-        System.out.println("Task code: " + taskCode);
-        System.out.println("Task points: " + TaskCodeUtility.TaskCodeToPoint(taskCode));
-        System.out.println("Task Description: " + task.getTaskDescription());
+        DisplayTask(task, true);
         return;
       }
     }
-    System.out.println("No task with code " + taskCode + " was found");
+    System.out.println(String.format(StringStore.taskNotFoundMessage, taskCode));
   }
 
   private static void AddTask() throws IOException
@@ -267,7 +241,7 @@ public class Main {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
         System.out.println("Are you sure you want to delete the following task? This is a permenant action. (Y/N)");
-        GetTask(taskCode);
+        DisplayTask(task, false);
         String response = reader.readLine();
         response = response.toUpperCase();
         switch (response)
@@ -282,69 +256,58 @@ public class Main {
         }
       }
     }
-    System.out.println("No task with code " + taskCode + " was found");
+    System.out.println(String.format(StringStore.taskNotFoundMessage, taskCode));
   }
 
   private static void AddTaskToRecentlyDeleted(Task taskToAdd) throws IOException
   {
-    BufferedReader deletedTasksSaveFileReader = new BufferedReader(new FileReader("recentlyDeletedTasks.csv"));
-    ArrayList<Task> recentlyDeleted = new ArrayList<Task>();
-    String row;
+    ArrayList<Task> recentlyDeleted = ReadTaskFile(StringStore.recentlyDeletedFilePath);
 
-    while ((row = deletedTasksSaveFileReader.readLine()) != null)
-    {
-      String[] dataLine = row.split(",");
-      recentlyDeleted.add(new Task(dataLine[0], dataLine[1]));
-    }
-    deletedTasksSaveFileReader.close();
-
-    if (recentlyDeleted.size() > 5)
+    if (recentlyDeleted.size() > 4)
     {
       recentlyDeleted.remove(0);
     }
 
-    FileWriter tasksSaveFileWriter = new FileWriter("recentlyDeletedTasks.csv");
-    for (Task task : recentlyDeleted)
-    {
-      tasksSaveFileWriter.append(task.getTaskCode() + "," + task.getTaskDescription() + "\n");
-    }
-    tasksSaveFileWriter.append(taskToAdd.getTaskCode() + "," + taskToAdd.getTaskDescription() + "\n");
+    recentlyDeleted.add(taskToAdd);
 
-    tasksSaveFileWriter.flush();
-    tasksSaveFileWriter.close();
+    SaveTasksToFile(recentlyDeleted, StringStore.recentlyDeletedFilePath);
   }
 
   private static void GetRecentlyDeletedTasks() throws IOException
   {
-    BufferedReader deletedTasksSaveFileReader = new BufferedReader(new FileReader("recentlyDeletedTasks.csv"));
-    String row;
 
-    while ((row = deletedTasksSaveFileReader.readLine()) != null)
+    ArrayList<Task> recentlyDeleted = ReadTaskFile(StringStore.recentlyDeletedFilePath);
+    DisplayTasks(recentlyDeleted, false);
+
+  }
+
+  private static void DisplayTasks(ArrayList<Task> toDisplay, boolean displayPoints)
+  {
+    for (Task task : toDisplay)
     {
-      String[] dataLine = row.split(",");
-
-      System.out.println("Task code: " + dataLine[0]);
-      System.out.println("Task Description: " + dataLine[1] + "\n");
+      DisplayTask(task, displayPoints);
+      System.out.println("\n");
     }
-    deletedTasksSaveFileReader.close();
+  }
+
+  private static void DisplayTask(Task toDisplay, boolean displayPoints)
+  {
+      System.out.println("Task code: " + toDisplay.getTaskCode());
+      if (displayPoints) 
+      { 
+        System.out.println("Task points: " + TaskCodeUtility.TaskCodeToPoint(toDisplay.getTaskCode())); 
+      }
+      System.out.println("Task Description: " + toDisplay.getTaskDescription());
   }
 
   private static void RecoverRecentlyDeletedTasks(String taskCode) throws IOException
   {
-    BufferedReader deletedTasksSaveFileReader = new BufferedReader(new FileReader("recentlyDeletedTasks.csv"));
-    String row;
-    ArrayList<Task> recentlyDeleted = new ArrayList<Task>();
 
-    while ((row = deletedTasksSaveFileReader.readLine()) != null)
-    {
-      String[] dataLine = row.split(",");
-      recentlyDeleted.add(new Task(dataLine[0], dataLine[1]));
-    }
+    ArrayList<Task> recentlyDeleted = ReadTaskFile(StringStore.recentlyDeletedFilePath);
 
-    deletedTasksSaveFileReader.close();
     boolean taskRecovered = false;
 
-    FileWriter tasksSaveFileWriter = new FileWriter("recentlyDeletedTasks.csv");
+    ArrayList<Task> putBack = new ArrayList<Task>();
 
     for (Task task : recentlyDeleted)
     {
@@ -356,16 +319,47 @@ public class Main {
       }
       else 
       {
-        tasksSaveFileWriter.append(task.getTaskCode() + "," + task.getTaskDescription() + "\n");
+        putBack.add(task);
       }
     }
 
+    SaveTasksToFile(putBack, StringStore.recentlyDeletedFilePath);
+
     if (!taskRecovered)
     {
-      System.out.println("No task with code " + taskCode + " found in recently deleted");
+      System.out.println(String.format(StringStore.taskNotFoundMessage, taskCode));
       System.out.println("Use the command: *get task deleted* to see a list of the recently deleted tasks");
     }
+  }
 
+  //All task save files can be done with the following 2 functions
+  private static void SaveTasksToFile(ArrayList<Task> toSave, String filePath) throws IOException
+  {
+    FileWriter tasksSaveFileWriter = new FileWriter(filePath);
+
+    for (Task task : toSave)
+    {
+      tasksSaveFileWriter.append(task.getTaskCode() + "," + task.getTaskDescription() + "\n");
+    }
+
+    tasksSaveFileWriter.flush();
     tasksSaveFileWriter.close();
+  }
+
+  private static ArrayList<Task> ReadTaskFile(String filePath) throws IOException
+  {
+    BufferedReader TasksSaveFileReader = new BufferedReader(new FileReader(filePath));
+    String row;
+    ArrayList<Task> tasksRead = new ArrayList<Task>();
+
+    while ((row = TasksSaveFileReader.readLine()) != null)
+    {
+      String[] dataLine = row.split(",");
+      tasksRead.add(new Task(dataLine[0], dataLine[1]));
+    }
+
+    TasksSaveFileReader.close();
+
+    return tasksRead;
   }
 }
