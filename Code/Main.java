@@ -338,7 +338,7 @@ public class Main {
     while ((row = deletedTasksSaveFileReader.readLine()) != null)
     {
       String[] dataLine = row.split(",");
-      recentlyDeleted.add(new Task(dataLine[0], dataLine[0]));
+      recentlyDeleted.add(new Task(dataLine[0], dataLine[1]));
     }
 
     deletedTasksSaveFileReader.close();
