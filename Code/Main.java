@@ -8,10 +8,11 @@ public class Main {
 
   static ArrayList<Command> allCommands = new ArrayList<Command>(
       Arrays.asList(new Command("get", "<type> <code>", 2), new Command("add", "<type>", 1),
-       new Command("exit", "", 0), new Command("delete", "<type> <code>", 2)));
+       new Command("exit", "", 0), new Command("delete", "<type> <code>", 2), new Command("recover", "<type> <code>", 2)));
 
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args) throws IOException 
   {
+    //Remove throws from main function and deal with it internally (Don't want program to stop if one occurs)
     boolean exitCommandGiven = false;
     
     HashMap<String, Command> commandDictionary = new HashMap<String, Command>();
@@ -55,6 +56,11 @@ public class Main {
               String codeToDelete = splitInput[2];
               HandleDelete(typeToDelete, codeToDelete);
               break;
+            case "recover":
+              String typeToRecover = splitInput[1];
+              String codeToRecover = splitInput[2];
+              HandleRecover(typeToRecover, codeToRecover);
+              break;
             default:
               break;
           }
@@ -83,9 +89,9 @@ public class Main {
   {
     FileWriter tasksSaveFileWriter = new FileWriter("tasks.csv");
 
-    for (Task tsk : Tasks)
+    for (Task task : Tasks)
     {
-      tasksSaveFileWriter.append(tsk.getTaskCode() + "," + tsk.getTaskDescription() + "\n");
+      tasksSaveFileWriter.append(task.getTaskCode() + "," + task.getTaskDescription() + "\n");
     }
 
     tasksSaveFileWriter.flush();
@@ -136,6 +142,16 @@ public class Main {
           case "all":
             GetAllTasks();
             break;
+          case "deleted":
+            try
+            {
+              GetRecentlyDeletedTasks();
+            }
+            catch (IOException e)
+            {
+              System.out.println("Error when attempting to read from file, possible corruption");
+            }
+            break;
           default:
             GetTask(code);
             break;
@@ -159,6 +175,25 @@ public class Main {
         catch (IOException e) 
         {
           System.out.println("An error when attempting to read the data stream, please try again");
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  private static void HandleRecover(String typeToRecover, String code)
+  {
+    switch (typeToRecover)
+    {
+      case "task":
+        try
+        {
+          RecoverRecentlyDeletedTasks(code);
+        }
+        catch (IOException e)
+        {
+          System.out.println("Error when attempting to read from file, possible corruption");
         }
         break;
       default:
@@ -238,6 +273,7 @@ public class Main {
         switch (response)
         {
           case "Y":
+            AddTaskToRecentlyDeleted(task);
             Tasks.remove(task);
             System.out.println("Task " + taskCode + " removed");
             return;
@@ -247,5 +283,89 @@ public class Main {
       }
     }
     System.out.println("No task with code " + taskCode + " was found");
+  }
+
+  private static void AddTaskToRecentlyDeleted(Task taskToAdd) throws IOException
+  {
+    BufferedReader deletedTasksSaveFileReader = new BufferedReader(new FileReader("recentlyDeletedTasks.csv"));
+    ArrayList<Task> recentlyDeleted = new ArrayList<Task>();
+    String row;
+
+    while ((row = deletedTasksSaveFileReader.readLine()) != null)
+    {
+      String[] dataLine = row.split(",");
+      recentlyDeleted.add(new Task(dataLine[0], dataLine[1]));
+    }
+    deletedTasksSaveFileReader.close();
+
+    if (recentlyDeleted.size() > 5)
+    {
+      recentlyDeleted.remove(0);
+    }
+
+    FileWriter tasksSaveFileWriter = new FileWriter("recentlyDeletedTasks.csv");
+    for (Task task : recentlyDeleted)
+    {
+      tasksSaveFileWriter.append(task.getTaskCode() + "," + task.getTaskDescription() + "\n");
+    }
+    tasksSaveFileWriter.append(taskToAdd.getTaskCode() + "," + taskToAdd.getTaskDescription() + "\n");
+
+    tasksSaveFileWriter.flush();
+    tasksSaveFileWriter.close();
+  }
+
+  private static void GetRecentlyDeletedTasks() throws IOException
+  {
+    BufferedReader deletedTasksSaveFileReader = new BufferedReader(new FileReader("recentlyDeletedTasks.csv"));
+    String row;
+
+    while ((row = deletedTasksSaveFileReader.readLine()) != null)
+    {
+      String[] dataLine = row.split(",");
+
+      System.out.println("Task code: " + dataLine[0]);
+      System.out.println("Task Description: " + dataLine[1] + "\n");
+    }
+    deletedTasksSaveFileReader.close();
+  }
+
+  private static void RecoverRecentlyDeletedTasks(String taskCode) throws IOException
+  {
+    BufferedReader deletedTasksSaveFileReader = new BufferedReader(new FileReader("recentlyDeletedTasks.csv"));
+    String row;
+    ArrayList<Task> recentlyDeleted = new ArrayList<Task>();
+
+    while ((row = deletedTasksSaveFileReader.readLine()) != null)
+    {
+      String[] dataLine = row.split(",");
+      recentlyDeleted.add(new Task(dataLine[0], dataLine[0]));
+    }
+
+    deletedTasksSaveFileReader.close();
+    boolean taskRecovered = false;
+
+    FileWriter tasksSaveFileWriter = new FileWriter("recentlyDeletedTasks.csv");
+
+    for (Task task : recentlyDeleted)
+    {
+      if (task.getTaskCode().equals(taskCode))
+      {
+        taskRecovered = true;
+        Tasks.add(task);
+        System.out.println("Task " + taskCode + " succesfully recovered");
+      }
+      else 
+      {
+        tasksSaveFileWriter.append(task.getTaskCode() + "," + task.getTaskDescription() + "\n");
+      }
+    }
+
+    if (!taskRecovered)
+    {
+      System.out.println("No task with code " + taskCode + " found in recently deleted");
+      System.out.println("Use the command: *get task deleted* to see a list of the recently deleted tasks");
+    }
+
+    tasksSaveFileWriter.close();
   }
 }
