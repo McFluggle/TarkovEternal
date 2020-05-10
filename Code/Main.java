@@ -5,8 +5,9 @@ public class Main {
   static ArrayList<Task> Tasks = new ArrayList<Task>();
 
   static ArrayList<Command> allCommands = new ArrayList<Command>(
-      Arrays.asList(new Command("get", "<type> <code>", 2), new Command("add", "<type>", 1),
-       new Command("exit", "", 0), new Command("delete", "<type> <code>", 2), new Command("recover", "<type> <code>", 2)));
+      Arrays.asList(new Command("get", "<type> <code>"), new Command("add", "<type>"),
+       new Command("exit", ""), new Command("delete", "<type> <code>"), new Command("recover", "<type> <code>"),
+       new Command("edit", "<type> <code>"), new Command("modify", "<type> <code>")));
 
   public static void main(String[] args) throws IOException 
   {
@@ -59,6 +60,10 @@ public class Main {
               String codeToRecover = splitInput[2];
               HandleRecover(typeToRecover, codeToRecover);
               break;
+            case "modify":
+              String typeToModify = splitInput[1];
+              String codeToModify = splitInput[2];
+              HandleModify(typeToModify, codeToModify);
             default:
               break;
           }
@@ -110,6 +115,26 @@ public class Main {
         break;
       default:
         System.out.println(String.format(StringStore.typeUnrecognisedErrorMessage, typeToAdd));
+        break;
+    }
+  }
+
+  private static void HandleModify(String typeToModify, String codeToModify)
+  {
+    switch (typeToModify)
+    {
+      case "task":
+        try 
+        {
+          ModifyTask(codeToModify);
+        } 
+        catch (IOException e) 
+        {
+          System.out.println("An error when attempting to read the data stream, please try again");
+        }
+        break;
+      default:
+        System.out.println(String.format(StringStore.typeUnrecognisedErrorMessage, typeToModify));
         break;
     }
   }
@@ -330,6 +355,25 @@ public class Main {
       System.out.println(String.format(StringStore.taskNotFoundMessage, taskCode));
       System.out.println("Use the command: *get task deleted* to see a list of the recently deleted tasks");
     }
+  }
+
+  private static void ModifyTask(String code) throws IOException
+  {
+    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+
+    for (Task task : Tasks)
+    {
+      if (task.getTaskCode().equals(code))
+      {
+        System.out.print("New task description: ");
+        String newDescription = reader.readLine();
+
+        task.setTaskDescription(newDescription);
+        return;
+      }
+    }
+
+    System.out.println("No task with code " + code + " was found");
   }
 
   //All task save files can be done with the following 2 functions
