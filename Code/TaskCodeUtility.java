@@ -59,7 +59,9 @@ public class TaskCodeUtility
         return true;
     }
 
-    static private HashMap<String, Integer> difficultyCodes = new HashMap<>();
+    static public final String currentWeekCode = "W0";
+
+    static public HashMap<String, Integer> difficultyCodes = new HashMap<>();
     static 
     {
         difficultyCodes.put("EA", 2);

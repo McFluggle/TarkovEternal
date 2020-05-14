@@ -217,7 +217,7 @@ public class Main {
   {
     if (TaskCodeUtility.IsValidCode(taskCode) == false)
     {
-      System.out.println("Invalid task code " + taskCode);
+      System.out.println(String.format(StringStore.invalidTaskCodeErrorMessage, taskCode));
       return;
     }
 
@@ -235,27 +235,44 @@ public class Main {
   private static void AddTask() throws IOException
   {
     BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-    System.out.print("Task code: ");
-    String taskCode = reader.readLine();
+    System.out.print("Task difficulty (EA/MD/HD/EX): ");
+    String difficultyCode = reader.readLine();
 
-    if (TaskCodeUtility.IsValidCode(taskCode))
+    if (TaskCodeUtility.difficultyCodes.containsKey(difficultyCode))
     {
+      ArrayList<Task> tasksOfSameDifficulty = getTasksByDifficulty(difficultyCode);
+
       System.out.print("Task Description: ");
       String taskDescription = reader.readLine();
-      Tasks.add(new Task(taskCode, taskDescription));
-      System.out.println("Operation successful, task " + taskCode + " created");
+      Tasks.add(new Task(TaskCodeUtility.currentWeekCode + "-" + difficultyCode + (tasksOfSameDifficulty.size() + 1), taskDescription));
+      System.out.println("Operation successful, task " + difficultyCode + " created");
     }
     else 
     {
-      System.out.println("Operation failed, invalid task code: " + taskCode);
+      System.out.println("Invalid difficulty");
     }
+  }
+
+  private static ArrayList<Task> getTasksByDifficulty(String difficultyCode)
+  {
+    ArrayList<Task> matchingTasks = new ArrayList<Task>();
+
+    for (Task task : Tasks)
+    {
+      if (TaskCodeUtility.GetDifficultyCode(task.getTaskCode()).equals(difficultyCode))
+      {
+        matchingTasks.add(task);
+      }
+    }
+
+    return matchingTasks;
   }
 
   private static void DeleteTask(String taskCode) throws IOException
   {
     if (TaskCodeUtility.IsValidCode(taskCode) == false)
     {
-      System.out.println("Invalid task code " + taskCode);
+      System.out.println(String.format(StringStore.invalidTaskCodeErrorMessage, taskCode));
       return;
     }
 
@@ -373,7 +390,7 @@ public class Main {
       }
     }
 
-    System.out.println("No task with code " + code + " was found");
+    System.out.println(String.format(StringStore.taskNotFoundMessage, code));
   }
 
   //All task save files can be done with the following 2 functions
